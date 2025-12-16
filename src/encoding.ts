@@ -66,12 +66,15 @@ export function encodeKey(key: KvKey): Uint8Array {
             view.setFloat64(0, part, false); // Big Endian
 
             const uint8 = new Uint8Array(buffer);
-            if ((uint8[0]! & 0x80) !== 0) {
+            if (((uint8[0] ?? 0) & 0x80) !== 0) {
                 // Negative
-                for (let i = 0; i < 8; i++) uint8[i]! ^= 0xff;
+                for (let i = 0; i < 8; i++) {
+                    const v = uint8[i];
+                    if (v !== undefined) uint8[i] = v ^ 0xff;
+                }
             } else {
                 // Positive
-                uint8[0]! |= 0x80;
+                if (uint8[0] !== undefined) uint8[0] |= 0x80;
             }
             parts.push(concat(prefix, uint8));
         } else if (typeof part === "boolean") {
@@ -94,7 +97,7 @@ export function encodeKey(key: KvKey): Uint8Array {
             // So we want negatives to be 'small' bytes.
             // Standard trick: Toggle the MSB.
             const b = new Uint8Array(data.buffer);
-            b[0]! ^= 0x80;
+            if (b[0] !== undefined) b[0] ^= 0x80;
             parts.push(concat(prefix, b));
         } else if (part instanceof Uint8Array) {
             const prefix = new Uint8Array([TYPE_BYTES]);
@@ -128,8 +131,8 @@ export function decodeKey(bytes: Uint8Array): KvKey {
     while (i < bytes.length) {
         const type = bytes[i++];
         if (type === TYPE_STRING) {
-            const start = i;
-            const chunks: Uint8Array[] = [];
+            const _start = i;
+            const _chunks: Uint8Array[] = [];
             while (i < bytes.length) {
                 if (bytes[i] === NULL_BYTE) {
                     i++; // consume null
@@ -162,7 +165,10 @@ export function decodeKey(bytes: Uint8Array): KvKey {
             } else {
                 b0 ^= 0xff; // Was negative, untoggle all
                 view.setUint8(0, b0); // wait, need to invert all bytes
-                for (let k = 0; k < 8; k++) buf[k]! ^= 0xff;
+                for (let k = 0; k < 8; k++) {
+                    const val = buf[k];
+                    if (val !== undefined) buf[k] = val ^ 0xff;
+                }
             }
             key.push(view.getFloat64(0, false));
         } else if (type === TYPE_BOOLEAN) {
@@ -170,7 +176,7 @@ export function decodeKey(bytes: Uint8Array): KvKey {
         } else if (type === TYPE_BIGINT) {
             const buf = bytes.slice(i, i + 8);
             i += 8;
-            buf[0]! ^= 0x80;
+            if (buf[0] !== undefined) buf[0] ^= 0x80;
             const view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
             key.push(view.getBigInt64(0, false));
         } else {
@@ -204,7 +210,8 @@ function escapeBytes(data: Uint8Array): Uint8Array {
     const out = new Uint8Array(len);
     let j = 0;
     for (let i = 0; i < data.length; i++) {
-        out[j++] = data[i]!;
+        const val = data[i];
+        if (val !== undefined) out[j++] = val;
         if (data[i] === 0) out[j++] = 0xff;
     }
     return out;

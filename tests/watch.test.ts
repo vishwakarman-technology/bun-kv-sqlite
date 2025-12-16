@@ -21,7 +21,7 @@ describe("BunKV Watch", () => {
         const { value, done } = await reader.read();
         expect(done).toBe(false);
         expect(value).toHaveLength(1);
-        expect(value[0]!.value).toBe("init");
+        expect(value?.[0]?.value).toBe("init");
 
         reader.cancel();
     });
@@ -34,14 +34,14 @@ describe("BunKV Watch", () => {
 
         // Initial value
         const { value: init } = await reader.read();
-        expect(init[0]!.value).toBe(0);
+        expect(init?.[0]?.value).toBe(0);
 
         // Update
         await kv.set(["counter"], 1);
 
         // Should receive update
         const { value: update } = await reader.read();
-        expect(update[0]!.value).toBe(1);
+        expect(update?.[0]?.value).toBe(1);
 
         reader.cancel();
     });
@@ -73,7 +73,7 @@ describe("BunKV Watch", () => {
         // We'll just wait for the next read, which MUST be "A2".
 
         const { value: update } = await reader.read();
-        expect(update[0]!.value).toBe("A2");
+        expect(update?.[0]?.value).toBe("A2");
 
         reader.cancel();
     });

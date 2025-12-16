@@ -1,7 +1,7 @@
-import { describe, test, expect } from "bun:test";
-import { openKv as openKvEsm } from "../dist/index.js";
-// @ts-ignore
+import { describe, expect, test } from "bun:test";
+// @ts-expect-error
 import { openKv as openKvCjs } from "../dist/index.cjs";
+import { openKv as openKvEsm } from "../dist/index.js";
 
 describe("Distribution Build Tests", () => {
     test("ESM Build (index.js)", async () => {

@@ -1,6 +1,6 @@
 import { Database } from "bun:sqlite";
-import { type Tracer, trace } from "@opentelemetry/api";
-import { EventEmitter } from "events";
+import { EventEmitter } from "node:events";
+import { type Span, type Tracer, trace } from "@opentelemetry/api";
 import { ulid } from "ulid";
 import { encodeKey, type KvKey } from "./encoding";
 import { KvErrors } from "./error";
@@ -22,12 +22,12 @@ export type KvEntryMaybe<T = unknown> = KvEntry<T> | { key: KvKey; value: null; 
  */
 export type KvCommitResult =
     | {
-        ok: true;
-        version: string;
-    }
+          ok: true;
+          version: string;
+      }
     | {
-        ok: false;
-    };
+          ok: false;
+      };
 
 /**
  * Options for listing keys.
@@ -83,17 +83,12 @@ export class BunKV {
     private init() {
         this.db.run(SQL.CREATE_TABLE);
 
-        // Migration for existing tables
-        // 1. Rename versionstamp to version if needed?
-        // SQLite doesn't support easy rename column.
-        // If 'versionstamp' exists but 'version' does not, we need to migrate.
-        // Or just "ADD COLUMN version" and copy?
         const runMigration = (sql: string) => {
             try {
                 this.db.run(sql);
-            } catch (error: any) {
+            } catch (error: unknown) {
                 // Ignore if column already exists
-                if (error?.message?.includes("duplicate column name")) {
+                if (error instanceof Error && error.message.includes("duplicate column name")) {
                     return;
                 }
                 throw error;
@@ -197,7 +192,7 @@ export class BunKV {
         // Filtering in SQL is better for limit count.
 
         let sql = SQL.SELECT_LIST_BASE;
-        const params: any[] = [];
+        const params: (string | number | Uint8Array)[] = [];
         const conditions: string[] = [`(date_expired IS NULL OR date_expired >= ${now})`];
 
         // Constraints
@@ -230,7 +225,7 @@ export class BunKV {
         }
 
         if (conditions.length > 0) {
-            sql += " WHERE " + conditions.join(" AND ");
+            sql += ` WHERE ${conditions.join(" AND ")}`;
         }
 
         sql += options.reverse ? " ORDER BY pk DESC" : " ORDER BY pk ASC";
@@ -334,8 +329,19 @@ export class BunKV {
      */
     atomic() {
         const self = this;
-        const checks: any[] = [];
-        const ops: any[] = [];
+        interface AtomicCheck {
+            key: KvKey;
+            version: string | null;
+        }
+        interface AtomicOp {
+            type: "set" | "delete";
+            key: KvKey;
+            value?: unknown;
+            options?: KvSetOptions;
+        }
+
+        const checks: AtomicCheck[] = [];
+        const ops: AtomicOp[] = [];
         return {
             check(key: KvKey, version: string | null) {
                 checks.push({ key, version });
@@ -358,7 +364,10 @@ export class BunKV {
                         // 1. Checks
                         for (const check of checks) {
                             const pk = encodeKey(check.key);
-                            const existing = self.db.prepare(SQL.SELECT_META_CHECK).get(pk) as any;
+                            const existing = self.db.prepare(SQL.SELECT_META_CHECK).get(pk) as {
+                                version: string;
+                                date_expired: number | null;
+                            } | null;
 
                             // Handle expiration in check
                             let effectiveVersion = existing?.version;
@@ -409,7 +418,7 @@ export class BunKV {
                             self.events.emit("change", res.changedKeys);
                         }
                         return { ok: true, version: res.newVersion };
-                    } catch (e) {
+                    } catch (_e) {
                         return { ok: false };
                     }
                 });
@@ -431,7 +440,8 @@ export class BunKV {
         const res = new Uint8Array(bytes);
         // Increment starting from end
         for (let i = res.length - 1; i >= 0; i--) {
-            const byte = res[i]!;
+            const byte = res[i];
+            if (byte === undefined) continue;
             if (byte < 0xff) {
                 res[i] = byte + 1;
                 return res;
@@ -439,28 +449,17 @@ export class BunKV {
             res[i] = 0;
         }
         // Overflow (e.g. [255, 255])
-        // Prefix logic usually stops here or appends 0?
-        // If we have strict prefix logic, [255] -> next prefix is impossible if length is fixed, but here it's variable.
-        // 0xFF -> 0x00 ?? No.
-        // If it overflows, it means it was all 0xFF.
-        // In that case, we can prepend a byte?
-        // Or just return a "Max" key.
-        return new Uint8Array([...res, 0]); // Append 0 is effectively next in lexicographical if same length, but actually...
-        // 'a' < 'a\0' ?? No. 'a' < 'b'.
-        // If 'a' = [97], next is [98].
-        // If 'z' = [122], next [123].
-        // If [255], next is... strictly larger than any [255, ...] sequence?
-        // Actually, usually we don't encounter pure [255] in our scheme because of terminator patterns or type bytes.
-        // So simple increment is fine.
+        return new Uint8Array([...res, 0]);
     }
-    private async trace<R>(name: string, fn: (span: any) => Promise<R>): Promise<R> {
+
+    private async trace<R>(name: string, fn: (span: Span | null) => Promise<R>): Promise<R> {
         if (!this.tracer) return fn(null);
         return this.tracer.startActiveSpan(`bunkv.${name}`, async (span) => {
             try {
                 const res = await fn(span);
                 return res;
-            } catch (e: any) {
-                span.recordException(e);
+            } catch (e: unknown) {
+                if (e instanceof Error) span.recordException(e);
                 span.setStatus({ code: 2 }); // Error
                 throw e;
             } finally {

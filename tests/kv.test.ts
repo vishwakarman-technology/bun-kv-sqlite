@@ -37,8 +37,8 @@ describe("BunKV", () => {
         }
 
         expect(entries.length).toBe(2);
-        expect(entries[0]!.key).toEqual(["users", "alice"]);
-        expect(entries[1]!.key).toEqual(["users", "bob"]);
+        expect(entries[0]?.key).toEqual(["users", "alice"]);
+        expect(entries[1]?.key).toEqual(["users", "bob"]);
     });
 
     test("ordering types", async () => {
@@ -115,7 +115,7 @@ describe("BunKV", () => {
 
     test("atomic transaction failure", async () => {
         await kv.set(["lock"], "taken");
-        const entry = await kv.get(["lock"]);
+        const _entry = await kv.get(["lock"]);
 
         const res = await kv.atomic().check(["lock"], "wrong-version").set(["lock"], "stolen").commit();
 
