@@ -14,7 +14,9 @@ describe("Filesystem Benchmark (Real Disk I/O)", () => {
         // Ensure clean state
         try {
             await unlink(DB_PATH);
-        } catch { }
+        } catch {
+            // Ignore
+        }
         kv = await openKv(DB_PATH);
         console.log(`\n[Setup] Opened KV at ${DB_PATH}`);
     });
@@ -23,7 +25,9 @@ describe("Filesystem Benchmark (Real Disk I/O)", () => {
         await kv.close();
         try {
             await unlink(DB_PATH);
-        } catch { }
+        } catch {
+            // Ignore
+        }
         console.log(`[Teardown] Removed ${DB_PATH}\n`);
     });
 

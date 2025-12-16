@@ -21,14 +21,16 @@
         "test:dist": "bun test tests/dist.test.ts",
         "postbuild": "bun run test:dist",
         "lint": "biome check .",
-        "benchmark": "bun run benchmarks/index.ts"
+        "benchmark": "bun run benchmarks/index.ts",
+        "prepare": "husky"
     },
     "type": "module",
     "private": true,
     "devDependencies": {
         "@biomejs/biome": "2.3.9",
         "@types/bun": "latest",
-        "@types/node": "^25.0.3"
+        "@types/node": "^25.0.3",
+        "husky": "^9.1.7"
     },
     "peerDependencies": {
         "typescript": "^5"
