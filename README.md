@@ -1,4 +1,4 @@
-# bun-sqlite-kv
+# BunKV
 
 A fast, persistent, and Deno KV-compatible Key-Value store for [Bun](https://bun.sh), backed by SQLite.
 

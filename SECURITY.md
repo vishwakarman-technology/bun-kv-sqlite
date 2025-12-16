@@ -1,48 +1,26 @@
-# Security & Code Quality Review
+# Security Policy
 
-## Findings
+## Reporting a Vulnerability
 
-### 1. Unbounded Event Listeners (Resource Exhaustion Risk)
-**Severity**: Low (if used internally) / Medium (if exposed to untrusted input)
-**Location**: `src/kv.ts:76`
-```typescript
-this.events.setMaxListeners(0); // Unlimited listeners
-```
-**Issue**: Setting max listeners to 0 disables the memory leak warning. If an application creates many watchers (e.g., one per user connection) without properly cancelling them, this will lead to a memory leak and potential crash.
-**Recommendation**: Ensure watchers are always cancelled or limit the number of active watchers if possible.
+If you discover a security vulnerability in BunKV, please report it via email to **developers@vishwakarman.tech**.
 
-### 2. Lazy Expiration & Database Growth
-**Severity**: Medium (Performance/Storage)
-**Location**: `src/kv.ts:195` (list)
-**Issue**: The `list()` method filters out expired keys but does not delete them. The `get()` method lazily deletes them. If keys are only ever listed and never accessed directly via `get()`, they will remain in the database forever, occupying space and slowing down queries.
-**Recommendation**: Implement a background cleanup task (e.g., `vacuum()` method) or delete expired keys during `list()` iteration (though this affects read performance).
+We will acknowledge your report within 7 days and provide an estimated timeline for a patch or workaround. We ask that you do not publicly disclose the issue until it has been addressed.
 
-### 3. Loose Migration Handling
-**Severity**: Low (Reliability)
-**Location**: `src/kv.ts:91`
-```typescript
-try { this.db.run(SQL.MIGRATE_ADD_VERSION); } catch { }
-```
-**Issue**: Swallowing all errors hides potential database corruption or permissions issues. It assumes the only error is "column already exists", which might not be true.
-**Recommendation**: Check if the column exists using `PRAGMA table_info` before attempting to add it, or check `error.message`.
+## Security Considerations & Limitations
 
-### 4. Minor SQL Parameter Injection
-**Severity**: Very Low / Safe
-**Location**: `src/kv.ts:202`
-```typescript
-const conditions: string[] = [`(date_expired IS NULL OR date_expired >= ${now})`];
-```
-**Issue**: While `Date.now()` returns a number and is currently safe from injection, it is best practice to always use parameter bindings for values in SQL queries.
-**Recommendation**: Use `?` binding for `now`.
+When using BunKV, be aware of the following design choices and their security/operational implications:
 
-### 5. Sensitive Data in Traces
-**Severity**: Informational
-**Location**: `src/kv.ts:117`, `src/kv.ts:152`
-```typescript
-span?.setAttribute("db.key", JSON.stringify(key));
-```
-**Issue**: Keys are logged to OpenTelemetry traces. If keys contain PII or secrets (e.g. `["session", "token_123"]`), this could leak sensitive data to the tracing backend.
-**Recommendation**: Ensure keys do not contain secrets, or implement a masking strategy for traces.
+### 1. Resource Management (Watchers)
+BunKV sets `MaxListeners` to `0` (unlimited) to allow for many concurrent `watch` operations.
+-   **Risk**: If your application creates watchers based on untrusted user input without limits, it may lead to memory exhaustion (DoS).
+-   **Mitigation**: Ensure your application limits the number of active watchers per user or session, and always cancels readers (`reader.cancel()`) when they are no longer needed.
 
-## Conclusion
-The codebase is generally secure against major vulnerabilities like SQL Injection (due to use of bindings) and Path Traversal (assuming trusted input for DB path). The identified issues are primarily related to resource management and best practices.
+### 2. Data Privacy (Tracing)
+If OpenTelemetry tracing is enabled (`OTEL_BUN=true`), BunKV logs keys to the tracing backend for observability (`db.key` attribute).
+-   **Risk**: If your keys contain sensitive information (e.g., `["session", "SECRET_TOKEN"]`), this data will be visible in your trace logs.
+-   **Mitigation**: Avoid including secrets directly in keys. Store secrets as values (which are not logged) or hash sensitive parts of the key.
+
+### 3. Database Growth (Lazy Expiration)
+BunKV implements "Lazy Expiration" for performance. Expired keys are not strictly deleted from the underlying SQLite database until they are accessed via `get()`.
+-   **Risk**: A database with many set-with-expiry operations that are never read again may grow in size indefinitely on disk.
+-   **Mitigation**: Periodic vacuuming or accessing keys can trigger cleanup, but currently, no automatic background garbage collection is enforced by the library.
