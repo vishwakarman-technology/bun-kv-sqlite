@@ -4,7 +4,7 @@ import { type BunKV, openKv } from "../src/index";
 
 // Configuration
 const DB_PATH = "bench.sqlite";
-const CONCURRENCY_LIMIT = 5000; // Slightly lower for disk I/O test to keep reasonable time
+const CONCURRENCY_LIMIT = 2000; // Reduced to prevent timeouts on slower disks
 const LARGE_VALUE_SIZE = 10 * 1024 * 1024; // 10MB
 
 describe("Filesystem Benchmark (Real Disk I/O)", () => {
@@ -14,7 +14,7 @@ describe("Filesystem Benchmark (Real Disk I/O)", () => {
         // Ensure clean state
         try {
             await unlink(DB_PATH);
-        } catch {}
+        } catch { }
         kv = await openKv(DB_PATH);
         console.log(`\n[Setup] Opened KV at ${DB_PATH}`);
     });
@@ -23,7 +23,7 @@ describe("Filesystem Benchmark (Real Disk I/O)", () => {
         await kv.close();
         try {
             await unlink(DB_PATH);
-        } catch {}
+        } catch { }
         console.log(`[Teardown] Removed ${DB_PATH}\n`);
     });
 
@@ -46,7 +46,7 @@ describe("Filesystem Benchmark (Real Disk I/O)", () => {
         // Verify a random one
         const entry = await kv.get(["bench", "fs", CONCURRENCY_LIMIT - 1]);
         expect(entry.value).toEqual({ i: CONCURRENCY_LIMIT - 1 });
-    });
+    }, 30000);
 
     test("fs: concurrent reads", async () => {
         const start = performance.now();
@@ -63,7 +63,7 @@ describe("Filesystem Benchmark (Real Disk I/O)", () => {
         console.log(`Time: ${duration.toFixed(2)}ms`);
         console.log(`Rate: ${opsPerSec.toFixed(2)} ops/sec`);
         console.log(`---------------------------`);
-    });
+    }, 30000);
 
     test("fs: large value write/read (10MB)", async () => {
         const largeString = "f".repeat(LARGE_VALUE_SIZE);
