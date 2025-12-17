@@ -16,7 +16,11 @@
         "dist"
     ],
     "scripts": {
-        "build": "rm -rf dist && bun build ./src/index.ts --outfile ./dist/index.cjs --target node --format cjs --packages external && bun build ./src/index.ts --outfile ./dist/index.js --target node --format esm --packages external && tsc -p tsconfig.build.json",
+        "clean": "rm -rf dist",
+        "prebuild": "bun run clean",
+        "build:esm": "bun build ./src/index.ts --outfile ./dist/index.js --target node --format esm --packages external && tsc -p tsconfig.build.json",
+        "build:cjs": "bun build ./src/index.ts --outfile ./dist/index.cjs --target node --format cjs --packages external",
+        "build": "bun run build:cjs && bun run build:esm",
         "test": "bun test",
         "test:dist": "bun test tests/dist.test.ts",
         "postbuild": "bun run test:dist",
@@ -38,5 +42,11 @@
     "dependencies": {
         "@opentelemetry/api": "^1.9.0",
         "ulid": "^3.0.2"
+    },
+    "prettier": {
+        "singleQuote": true,
+        "trailingComma": "none",
+        "printWidth": 120,
+        "tabWidth": 4
     }
 }
