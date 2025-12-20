@@ -1,6 +1,6 @@
 # BunKV
 
-A fast, persistent, and Deno KV-compatible Key-Value store for [Bun](https://bun.sh), backed by SQLite.
+A fast, persistent Key-Value store for [Bun](https://bun.sh), backed by SQLite.
 
 ## Features
 
@@ -14,7 +14,7 @@ A fast, persistent, and Deno KV-compatible Key-Value store for [Bun](https://bun
 ## Installation
 
 ```bash
-bun install bunkv
+bun install @vishwakarman-technology/bunkv
 ```
 
 ## Usage
@@ -22,7 +22,7 @@ bun install bunkv
 ### Basic Operations
 
 ```typescript
-import { openKv } from "bunkv";
+import { openKv } from "@vishwakarman-technology/bunkv";
 
 const kv = await openKv("my-database.sqlite");
 
