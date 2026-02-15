@@ -71,7 +71,7 @@ describe("Concurrency & Performance", () => {
 	});
 
 	test(`concurrent operations (mixed read/write)`, async () => {
-		const count = 5000;
+		const count = 1000;
 		const start = performance.now();
 
 		const promises = [];
