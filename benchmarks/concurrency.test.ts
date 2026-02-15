@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, test } from "bun:test";
+import { describe, beforeAll, afterAll, test } from "bun:test";
 import { type BunKV, openKv } from "../src/index";
 import { stat, unlink } from "node:fs/promises";
 
@@ -29,7 +29,6 @@ describe("Concurrency & Performance", () => {
 
 	test(`concurrent writes (${CONCURRENCY_LIMIT} ops)`, async () => {
 		const start = performance.now();
-
 		const promises = [];
 		for (let i = 0; i < CONCURRENCY_LIMIT; i++) {
 			promises.push(kv.set(["perf", i], { value: i }));

@@ -1,7 +1,9 @@
 {
 	"name": "@vishwakarman-technology/bun-kv-sqlite",
-	"version": "1.7.0",
+	"version": "1.9.0",
 	"description": "A fast, persistent Key-Value store for [Bun](https://bun.sh), backed by SQLite.",
+	"main": "./dist/index.cjs",
+	"types": "./dist/index.d.ts",
 	"keywords": [
 		"BUN",
 		"SQLITE",
@@ -24,8 +26,7 @@
 			"require": "./dist/index.cjs"
 		}
 	},
-	"main": "./dist/index.cjs",
-	"types": "./dist/index.d.ts",
+
 	"directories": {
 		"test": "tests"
 	},
