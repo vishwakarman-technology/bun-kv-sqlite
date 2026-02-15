@@ -1,6 +1,6 @@
 {
 	"name": "@vishwakarman-technology/bun-kv-sqlite",
-	"version": "1.6.0",
+	"version": "1.7.0",
 	"description": "A fast, persistent Key-Value store for [Bun](https://bun.sh), backed by SQLite.",
 	"keywords": [
 		"BUN",
@@ -38,11 +38,12 @@
 		"build:esm": "bun build ./src/index.ts --outfile ./dist/index.js --target node --format esm --packages external && tsc -p tsconfig.build.json",
 		"build:cjs": "bun build ./src/index.ts --outfile ./dist/index.cjs --target node --format cjs --packages external",
 		"build": "bun run build:cjs && bun run build:esm",
-		"test": "bun test",
+		"test": "bun test tests",
 		"test:dist": "bun test tests/dist.test.ts",
+		"test:benchmarks": "bun test benchmarks",
 		"postbuild": "bun run test && bun run test:dist",
 		"benchmark": "bun run benchmarks/index.ts",
-		"prepare": "bun run build && bunx husky",
+		"prepare": "bunx husky",
 		"lint": "bunx @biomejs/biome lint --write",
 		"check": "bunx @biomejs/biome check --write",
 		"version:major": "npm version major --no-git-tag-version",
