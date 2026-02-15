@@ -6,7 +6,7 @@
  */
 
 export const KvErrors = {
-    ERROR_UNSUPPORTED_KEY_TYPE: (type: string) => `Unsupported key type: ${type}`,
-    ERROR_CHECK_FAILED_KEY_EXISTS: "Check failed: key exists",
-    ERROR_CHECK_FAILED_VERSION_MISMATCH: "Check failed: version mismatch",
+	ERROR_UNSUPPORTED_KEY_TYPE: (type: string) => `Unsupported key type: ${type}`,
+	ERROR_CHECK_FAILED_KEY_EXISTS: "Check failed: key exists",
+	ERROR_CHECK_FAILED_VERSION_MISMATCH: "Check failed: version mismatch",
 } as const;

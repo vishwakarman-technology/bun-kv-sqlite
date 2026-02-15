@@ -41,3 +41,4 @@ build/
 dist/
 coverage/
 logs/
+data/

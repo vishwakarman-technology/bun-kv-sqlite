@@ -14,7 +14,7 @@ A fast, persistent Key-Value store for [Bun](https://bun.sh), backed by SQLite.
 ## Installation
 
 ```bash
-bun install @vishwakarman-technology/bunkv
+bun install @vishwakarman-technology/bun-sqlite-kv
 ```
 
 ## Usage
@@ -22,19 +22,19 @@ bun install @vishwakarman-technology/bunkv
 ### Basic Operations
 
 ```typescript
-import { openKv } from "@vishwakarman-technology/bunkv";
+import { openKv } from "@vishwakarman-technology/bun-sqlite-kv"
 
-const kv = await openKv("my-database.sqlite");
+const kv = await openKv("./data/my-database.sqlite")
 
 // Set a value
-await kv.set(["users", "alice"], { name: "Alice", age: 30 });
+await kv.set(["users", "alice"], { name: "Alice", age: 30 })
 
 // Get a value
-const entry = await kv.get(["users", "alice"]);
-console.log(entry.value); // { name: "Alice", age: 30 }
+const entry = await kv.get(["users", "alice"])
+console.log(entry.value) // { name: "Alice", age: 30 }
 
 // Delete
-await kv.delete(["users", "alice"]);
+await kv.delete(["users", "alice"])
 ```
 
 ### Listing Keys
@@ -42,12 +42,12 @@ await kv.delete(["users", "alice"]);
 List operations support prefixes and ranges.
 
 ```typescript
-await kv.set(["users", "alice"], "Alice");
-await kv.set(["users", "bob"], "Bob");
+await kv.set(["users", "alice"], "Alice")
+await kv.set(["users", "bob"], "Bob")
 
 // List all users
 for await (const entry of kv.list({ prefix: ["users"] })) {
-    console.log(entry.key, entry.value);
+    console.log(entry.key, entry.value)
 }
 ```
 
@@ -57,7 +57,7 @@ Automatically expire keys after a duration (in milliseconds).
 
 ```typescript
 // Expire in 10 seconds
-await kv.set(["session", "123"], "active", { expireIn: 10_000 });
+await kv.set(["session", "123"], "active", { expireIn: 10_000 })
 ```
 
 ### Watching Keys
@@ -67,16 +67,16 @@ Listen for changes on specific keys. The `watch` method returns a `ReadableStrea
 ```typescript
 const stream = kv.watch([
     ["users", "alice"],
-    ["users", "bob"]
-]);
+    ["users", "bob"],
+])
 
 // Iterate over the stream to handle updates
 for await (const entries of stream) {
-    const alice = entries[0];
-    const bob = entries[1];
-    
-    console.log("Alice:", alice.value);
-    console.log("Bob:", bob.value);
+    const alice = entries[0]
+    const bob = entries[1]
+
+    console.log("Alice:", alice.value)
+    console.log("Bob:", bob.value)
 }
 ```
 
@@ -85,16 +85,17 @@ for await (const entries of stream) {
 Perform multiple operations atomically. Checks allow for optimistic concurrency control.
 
 ```typescript
-const result = await kv.atomic()
+const result = await kv
+    .atomic()
     .check(["bank", "alice"], currentVersion) // Optional optimistic check
     .set(["bank", "alice"], 100)
     .delete(["pending", "tx_1"])
-    .commit();
+    .commit()
 
 if (result.ok) {
-    console.log("Transaction succeeded", result.version);
+    console.log("Transaction succeeded", result.version)
 } else {
-    console.log("Transaction failed (check failed)");
+    console.log("Transaction failed (check failed)")
 }
 ```
 
@@ -107,11 +108,11 @@ OTEL_BUN=true bun run index.ts
 ```
 
 This will automatically instrument:
+
 - `get`, `set`, `delete` operations
 - `atomic.commit` transactions
 
 Ensure you have a valid OpenTelemetry SDK setup in your application to capture these traces.
-
 
 ### Error Handling
 
@@ -126,14 +127,16 @@ Common errors you might encounter:
 Benchmarks run on Apple Silicon (M-Series).
 
 ### In-Memory (`:memory:`)
-*Raw throughput without disk I/O overhead.*
+
+_Raw throughput without disk I/O overhead._
 
 - **Writes**: ~60,000 ops/sec
 - **Reads**: ~170,000 ops/sec
 - **Mixed**: ~110,000 ops/sec
 
 ### Filesystem (`db.sqlite`)
-*Real-world persistent storage using SQLite WAL mode.*
+
+_Real-world persistent storage using SQLite WAL mode._
 
 - **Writes**: ~3,500 ops/sec
 - **Reads**: ~78,000 ops/sec
@@ -141,7 +144,8 @@ Benchmarks run on Apple Silicon (M-Series).
 - **10MB Read**: ~7ms
 
 ### Bulk Insert Benchmark
-*Insertion of 1,000,000 user records (atomic batches of 1000).*
+
+_Insertion of 1,000,000 user records (atomic batches of 1000)._
 
 - **Total Time**: ~10.24s
 - **Throughput**: ~97,000 ops/sec (batched)
@@ -151,10 +155,10 @@ Benchmarks run on Apple Silicon (M-Series).
 
 `BunKV` supports significantly larger limits than standard Deno KV (which often limits Values to 64KB).
 
-| Feature | Tested Limit | Notes |
-|---------|--------------|-------|
-| **Key Size** | 10 KB+ | Standard Deno KV limit is 2KB. |
-| **Value Size** | 100 MB+ | Standard Deno KV limit is 64KB. Restricted mainly by system memory and SQLite row limits. |
+| Feature        | Tested Limit | Notes                                                                                     |
+| -------------- | ------------ | ----------------------------------------------------------------------------------------- |
+| **Key Size**   | 10 KB+       | Standard Deno KV limit is 2KB.                                                            |
+| **Value Size** | 100 MB+      | Standard Deno KV limit is 64KB. Restricted mainly by system memory and SQLite row limits. |
 
 ## License
 
