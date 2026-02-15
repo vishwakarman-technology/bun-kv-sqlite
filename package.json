@@ -15,7 +15,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/vishwakarman-technology/bun-kv-sqlite.git"
+		"url": "git+https://projects.vishwakarman.tech/vt/bun-kv-sqlite.git"
 	},
 	"license": "MIT",
 	"author": "Vishwakarman Technology <developers@vishwakarman.tech>",
