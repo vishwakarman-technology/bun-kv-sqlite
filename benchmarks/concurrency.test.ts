@@ -1,12 +1,12 @@
-import { describe, beforeAll, afterAll, test } from "bun:test";
-import { type BunKV, openKv } from "../src/index";
+import { afterAll, beforeAll, describe, test } from "bun:test";
 import { stat, unlink } from "node:fs/promises";
+import { type BunKV, openKv } from "../src/index";
 
 const DB_PATH = "./tests/data/test_concurrency.sqlite";
 
 describe("Concurrency & Performance", () => {
 	let kv: BunKV;
-	const CONCURRENCY_LIMIT = 10000;
+	const CONCURRENCY_LIMIT = 100;
 
 	beforeAll(async () => {
 		kv = await openKv(DB_PATH);

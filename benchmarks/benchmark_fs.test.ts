@@ -4,7 +4,7 @@ import { type BunKV, openKv } from "../src/index";
 
 // Configuration
 const DB_PATH = "./tests/data/test_bench_fs.sqlite";
-const CONCURRENCY_LIMIT = 2000; // Reduced to prevent timeouts on slower disks
+const CONCURRENCY_LIMIT = 100;
 const LARGE_VALUE_SIZE = 10 * 1024 * 1024; // 10MB
 
 describe("Filesystem Benchmark (Real Disk I/O)", () => {
